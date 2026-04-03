@@ -16,6 +16,7 @@
 		"Programming Languages",
 		"Other"
 	],
+	"icon": "icon.png",
 	"keywords": [
 		"typescript",
 		"hover",
