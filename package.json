@@ -1,0 +1,52 @@
+{
+	"name": "ts-clickable-types",
+	"displayName": "TypeScript Clickable Types",
+	"description": "Adds clickable type-name links to hover tooltips — jump to any type definition like in Visual Studio.",
+	"version": "1.0.0",
+	"publisher": "profanterdev",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/marpro200/ts-clickable-types"
+	},
+	"license": "MIT",
+	"engines": {
+		"vscode": "^1.74.0"
+	},
+	"categories": [
+		"Programming Languages",
+		"Other"
+	],
+	"keywords": [
+		"typescript",
+		"hover",
+		"type definition",
+		"navigation",
+		"clickable"
+	],
+	"activationEvents": [
+		"onLanguage:typescript",
+		"onLanguage:typescriptreact",
+		"onLanguage:javascript",
+		"onLanguage:javascriptreact"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "tsClickableTypes.goToTypeDefinition",
+				"title": "TypeScript Clickable Types: Go to Type Definition"
+			}
+		]
+	},
+	"scripts": {
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"package": "vsce package"
+	},
+	"devDependencies": {
+		"@types/node": "^18.0.0",
+		"@types/vscode": "^1.74.0",
+		"typescript": "^5.0.0",
+		"@vscode/vsce": "^2.22.0"
+	}
+}
