@@ -1,133 +1,90 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
 // ---------------------------------------------------------------------------
 // Built-in / global TypeScript types we do NOT want to show as "jump" links
 // ---------------------------------------------------------------------------
 const BUILTIN_TYPES = new Set([
-	"Array",
-	"Promise",
-	"Map",
-	"Set",
-	"WeakMap",
-	"WeakSet",
-	"WeakRef",
-	"Record",
-	"Partial",
-	"Required",
-	"Readonly",
-	"Pick",
-	"Omit",
-	"Extract",
-	"Exclude",
-	"ReturnType",
-	"InstanceType",
-	"Parameters",
-	"ConstructorParameters",
-	"NonNullable",
-	"Awaited",
-	"Uppercase",
-	"Lowercase",
-	"Capitalize",
-	"Uncapitalize",
-	"TemplateStringsArray",
-	"PropertyKey",
-	"ClassDecorator",
-	"Object",
-	"String",
-	"Number",
-	"Boolean",
-	"Symbol",
-	"BigInt",
-	"Function",
-	"RegExp",
-	"Date",
-	"Error",
-	"TypeError",
-	"RangeError",
-	"ReferenceError",
-	"SyntaxError",
-	"URIError",
-	"EvalError",
-	"ArrayBuffer",
-	"SharedArrayBuffer",
-	"DataView",
-	"Int8Array",
-	"Uint8Array",
-	"Uint8ClampedArray",
-	"Int16Array",
-	"Uint16Array",
-	"Int32Array",
-	"Uint32Array",
-	"Float32Array",
-	"Float64Array",
-	"BigInt64Array",
-	"BigUint64Array",
-	"Generator",
-	"AsyncGenerator",
-	"Iterator",
-	"AsyncIterator",
-	"Iterable",
-	"AsyncIterable",
-	"IterableIterator",
-	"AsyncIterableIterator",
-	"ReadonlyArray",
-	"ReadonlyMap",
-	"ReadonlySet",
-	"PromiseLike",
-	"Thenable",
-	"EventTarget",
-	"Event",
-	"CustomEvent",
-	"AbortSignal",
-	"AbortController",
-	"URL",
-	"URLSearchParams",
-	"FormData",
-	"Headers",
-	"Request",
-	"Response",
-	"ReadableStream",
-	"WritableStream",
-	"TransformStream",
-	"Blob",
-	"File",
-	"FileList",
-	"FileReader",
-	"Worker",
-	"MessageEvent",
-	"MessageChannel",
-	"MessagePort",
-	"Window",
-	"Document",
-	"Element",
-	"HTMLElement",
-	"SVGElement",
-	"Node",
-	"NodeList",
-	"Attr",
-	"Console",
-	"MutationObserver",
-	"IntersectionObserver",
-	"ResizeObserver",
-	"Storage",
-	"Navigator",
-	"Location",
-	"History",
-	"XMLHttpRequest",
-	"WebSocket",
-	"EventSource",
-	"Performance",
-	"PerformanceObserver",
-	"Proxy",
-	"Reflect",
-	"JSON",
-	"Math",
-	"Intl",
-	"React", // avoid treating the React namespace as a user type
+	'Array', 'Promise', 'Map', 'Set', 'WeakMap', 'WeakSet', 'WeakRef',
+	'Record', 'Partial', 'Required', 'Readonly', 'Pick', 'Omit',
+	'Extract', 'Exclude', 'ReturnType', 'InstanceType', 'Parameters',
+	'ConstructorParameters', 'NonNullable', 'Awaited',
+	'Uppercase', 'Lowercase', 'Capitalize', 'Uncapitalize',
+	'TemplateStringsArray', 'PropertyKey', 'ClassDecorator',
+	'Object', 'String', 'Number', 'Boolean', 'Symbol', 'BigInt',
+	'Function', 'RegExp', 'Date', 'Error', 'TypeError', 'RangeError',
+	'ReferenceError', 'SyntaxError', 'URIError', 'EvalError',
+	'ArrayBuffer', 'SharedArrayBuffer', 'DataView',
+	'Int8Array', 'Uint8Array', 'Uint8ClampedArray',
+	'Int16Array', 'Uint16Array', 'Int32Array', 'Uint32Array',
+	'Float32Array', 'Float64Array', 'BigInt64Array', 'BigUint64Array',
+	'Generator', 'AsyncGenerator', 'Iterator', 'AsyncIterator',
+	'Iterable', 'AsyncIterable', 'IterableIterator', 'AsyncIterableIterator',
+	'ReadonlyArray', 'ReadonlyMap', 'ReadonlySet',
+	'PromiseLike', 'Thenable',
+	'EventTarget', 'Event', 'CustomEvent', 'AbortSignal', 'AbortController',
+	'URL', 'URLSearchParams', 'FormData', 'Headers', 'Request', 'Response',
+	'ReadableStream', 'WritableStream', 'TransformStream',
+	'Blob', 'File', 'FileList', 'FileReader',
+	'Worker', 'MessageEvent', 'MessageChannel', 'MessagePort',
+	'Window', 'Document', 'Element', 'HTMLElement', 'SVGElement',
+	'Node', 'NodeList', 'Attr', 'Console',
+	'MutationObserver', 'IntersectionObserver', 'ResizeObserver',
+	'Storage', 'Navigator', 'Location', 'History',
+	'XMLHttpRequest', 'WebSocket', 'EventSource',
+	'Performance', 'PerformanceObserver',
+	'Proxy', 'Reflect', 'JSON', 'Math', 'Intl',
+	'React',
 ]);
 
-// Guard against re-entrant calls (we call executeHoverProvider from inside provideHover)
+// Guard against re-entrant calls
 let isProviding = false;
+
+// ---------------------------------------------------------------------------
+// Find the position of a type name in the document near the hover position.
+// Searches the hovered line first, then a few lines around it.
+// Returns the position of the first character of the match.
+// ---------------------------------------------------------------------------
+function findTypeNamePosition(
+	document: vscode.TextDocument,
+	hoverPosition: vscode.Position,
+	typeName: string
+): vscode.Position | null {
+	const searchRange = 5; // lines to search around hover position
+	const startLine = Math.max(0, hoverPosition.line - searchRange);
+	const endLine = Math.min(document.lineCount - 1, hoverPosition.line + searchRange);
+
+	// Build a regex that matches the type name as a whole word
+	const regex = new RegExp(`\\b${typeName}\\b`, 'g');
+
+	// Search hovered line first, preferring closest match to hover character
+	const hoveredLineText = document.lineAt(hoverPosition.line).text;
+	let bestMatch: vscode.Position | null = null;
+	let bestDistance = Infinity;
+	let m: RegExpExecArray | null;
+
+	regex.lastIndex = 0;
+	while ((m = regex.exec(hoveredLineText)) !== null) {
+		const dist = Math.abs(m.index - hoverPosition.character);
+		if (dist < bestDistance) {
+			bestDistance = dist;
+			bestMatch = new vscode.Position(hoverPosition.line, m.index);
+		}
+	}
+	if (bestMatch) return bestMatch;
+
+	// Fall back to surrounding lines
+	for (let line = startLine; line <= endLine; line++) {
+		if (line === hoverPosition.line) continue;
+		const lineText = document.lineAt(line).text;
+		regex.lastIndex = 0;
+		const match = regex.exec(lineText);
+		if (match) {
+			return new vscode.Position(line, match.index);
+		}
+	}
+
+	return null;
+}
 
 // ---------------------------------------------------------------------------
 // Activate
@@ -135,7 +92,7 @@ let isProviding = false;
 export function activate(context: vscode.ExtensionContext) {
 	// ── Command ──────────────────────────────────────────────────────────────
 	const goToTypeCmd = vscode.commands.registerCommand(
-		"tsClickableTypes.goToTypeDefinition",
+		'tsClickableTypes.goToTypeDefinition',
 		async (args: {
 			uri: string;
 			line: number;
@@ -143,13 +100,19 @@ export function activate(context: vscode.ExtensionContext) {
 			typeName: string;
 		}) => {
 			const uri = vscode.Uri.parse(args.uri);
-			const position = new vscode.Position(args.line, args.character);
+			const hoverPosition = new vscode.Position(args.line, args.character);
 
-			// Strategy 1 – executeTypeDefinitionProvider at the hovered position
+			// Strategy 1 – find the exact position of the type name in the document
+			// and use that for executeTypeDefinitionProvider, so clicking "MyObject"
+			// inside Record<string, MyObject> resolves MyObject — not Record.
 			try {
+				const document = await vscode.workspace.openTextDocument(uri);
+				const typePosition = findTypeNamePosition(document, hoverPosition, args.typeName);
+				const lookupPosition = typePosition ?? hoverPosition;
+
 				const locations = await vscode.commands.executeCommand<
 					(vscode.Location | vscode.LocationLink)[]
-				>("vscode.executeTypeDefinitionProvider", uri, position);
+				>('vscode.executeTypeDefinitionProvider', uri, lookupPosition);
 
 				if (locations && locations.length > 0) {
 					const loc = locations[0] as any;
@@ -170,7 +133,7 @@ export function activate(context: vscode.ExtensionContext) {
 			try {
 				const symbols = await vscode.commands.executeCommand<
 					vscode.SymbolInformation[]
-				>("vscode.executeWorkspaceSymbolProvider", args.typeName);
+				>('vscode.executeWorkspaceSymbolProvider', args.typeName);
 
 				if (symbols && symbols.length > 0) {
 					const typeKinds = [
@@ -182,7 +145,7 @@ export function activate(context: vscode.ExtensionContext) {
 					];
 					const best =
 						symbols.find(
-							(s) => s.name === args.typeName && typeKinds.includes(s.kind),
+							(s) => s.name === args.typeName && typeKinds.includes(s.kind)
 						) ??
 						symbols.find((s) => s.name === args.typeName) ??
 						symbols[0];
@@ -193,48 +156,40 @@ export function activate(context: vscode.ExtensionContext) {
 					});
 					return;
 				}
-			} catch (_) {
-				// fall through
-			}
+			} catch (_) { }
 
 			vscode.window.showInformationMessage(
-				`Could not find definition for type: ${args.typeName}`,
+				`Could not find definition for type: ${args.typeName}`
 			);
-		},
+		}
 	);
 
-	// ── Hover provider ────────────────────────────────────────────────────────
+	// ── Hover Provider ────────────────────────────────────────────────────────
 	const hoverProvider = vscode.languages.registerHoverProvider(
 		[
-			{ language: "typescript" },
-			{ language: "typescriptreact" },
-			{ language: "javascript" },
-			{ language: "javascriptreact" },
+			{ language: 'typescript' },
+			{ language: 'typescriptreact' },
+			{ language: 'javascript' },
+			{ language: 'javascriptreact' },
 		],
 		{
 			async provideHover(
 				document: vscode.TextDocument,
-				position: vscode.Position,
+				position: vscode.Position
 			): Promise<vscode.Hover | undefined> {
-				// Prevent infinite recursion
-				if (isProviding) {
-					return undefined;
-				}
+				if (isProviding) return undefined;
 				isProviding = true;
 
 				try {
 					const hovers = await vscode.commands.executeCommand<vscode.Hover[]>(
-						"vscode.executeHoverProvider",
+						'vscode.executeHoverProvider',
 						document.uri,
-						position,
+						position
 					);
 
-					if (!hovers || hovers.length === 0) {
-						return undefined;
-					}
+					if (!hovers || hovers.length === 0) return undefined;
 
-					// Rebuild hover contents so we can set isTrusted = true
-					let combinedText = "";
+					let combinedText = '';
 					const rebuiltContents: vscode.MarkdownString[] = [];
 
 					for (const hover of hovers) {
@@ -243,18 +198,14 @@ export function activate(context: vscode.ExtensionContext) {
 							if (md) {
 								md.isTrusted = true;
 								rebuiltContents.push(md);
-								combinedText += md.value + "\n";
+								combinedText += md.value + '\n';
 							}
 						}
 					}
 
-					// Extract user-defined type names from hover text
 					const typeNames = extractTypeNames(combinedText);
-					if (typeNames.length === 0) {
-						return undefined;
-					}
+					if (typeNames.length === 0) return undefined;
 
-					// Build the "Jump to type" links row
 					const baseArgs = {
 						uri: document.uri.toString(),
 						line: position.line,
@@ -263,7 +214,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 					const linkParts = typeNames.map((name) => {
 						const encoded = encodeURIComponent(
-							JSON.stringify({ ...baseArgs, typeName: name }),
+							JSON.stringify({ ...baseArgs, typeName: name })
 						);
 						return `[${name}](command:tsClickableTypes.goToTypeDefinition?${encoded} "Jump to ${name}")`;
 					});
@@ -279,10 +230,11 @@ export function activate(context: vscode.ExtensionContext) {
 					isProviding = false;
 				}
 			},
-		},
+		}
 	);
 
 	context.subscriptions.push(goToTypeCmd, hoverProvider);
+	console.log('TypeScript Clickable Types extension activated.');
 }
 
 // ---------------------------------------------------------------------------
@@ -292,27 +244,26 @@ export function activate(context: vscode.ExtensionContext) {
 type MarkedString = { language: string; value: string } | string;
 
 function contentToMarkdownString(
-	content: vscode.MarkdownString | MarkedString,
+	content: vscode.MarkdownString | MarkedString
 ): vscode.MarkdownString | null {
 	if (content instanceof vscode.MarkdownString) {
-		// Return a fresh copy so we can mutate isTrusted safely
 		const copy = new vscode.MarkdownString(content.value);
 		copy.isTrusted = content.isTrusted;
 		copy.supportHtml = content.supportHtml;
 		return copy;
 	}
-	if (typeof content === "string") {
+	if (typeof content === 'string') {
 		return new vscode.MarkdownString(content);
 	}
 	if (
-		typeof content === "object" &&
-		"value" in content &&
-		"language" in content
+		typeof content === 'object' &&
+		'value' in content &&
+		'language' in content
 	) {
 		const md = new vscode.MarkdownString();
 		md.appendCodeblock(
 			(content as { value: string; language: string }).value,
-			(content as { value: string; language: string }).language,
+			(content as { value: string; language: string }).language
 		);
 		return md;
 	}
@@ -322,14 +273,12 @@ function contentToMarkdownString(
 function extractTypeNames(hoverText: string): string[] {
 	const found = new Set<string>();
 
-	// Scan inside fenced code blocks  ``` ... ```
 	const fenced = /```[\w]*\n([\s\S]*?)\n```/g;
 	let m: RegExpExecArray | null;
 	while ((m = fenced.exec(hoverText)) !== null) {
 		scanForPascalCaseTypes(m[1], found);
 	}
 
-	// Also scan bare inline code  `...`
 	const inline = /`([^`\n]+)`/g;
 	while ((m = inline.exec(hoverText)) !== null) {
 		scanForPascalCaseTypes(m[1], found);
@@ -339,7 +288,6 @@ function extractTypeNames(hoverText: string): string[] {
 }
 
 function scanForPascalCaseTypes(code: string, found: Set<string>) {
-	// PascalCase identifiers are almost always user-defined types
 	const pascal = /\b([A-Z][a-zA-Z0-9_]*)\b/g;
 	let m: RegExpExecArray | null;
 	while ((m = pascal.exec(code)) !== null) {
@@ -350,4 +298,4 @@ function scanForPascalCaseTypes(code: string, found: Set<string>) {
 	}
 }
 
-export function deactivate() {}
+export function deactivate() { }
