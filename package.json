@@ -21,8 +21,13 @@
 		"typescript",
 		"hover",
 		"type definition",
+		"go to definition",
 		"navigation",
-		"clickable"
+		"clickable",
+		"tooltip",
+		"jump to type",
+		"tsx",
+		"javascript"
 	],
 	"activationEvents": [
 		"onLanguage:typescript",
@@ -42,12 +47,14 @@
 	"scripts": {
 		"compile": "tsc -p ./",
 		"watch": "tsc -watch -p ./",
+		"test": "vitest run",
 		"package": "vsce package"
 	},
 	"devDependencies": {
-		"@types/node": "^18.0.0",
+		"@types/node": "^25.5.2",
 		"@types/vscode": "^1.74.0",
+		"@vscode/vsce": "^2.22.0",
 		"typescript": "^5.0.0",
-		"@vscode/vsce": "^2.22.0"
+		"vitest": "^4.1.3"
 	}
 }

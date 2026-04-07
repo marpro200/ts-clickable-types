@@ -1,6 +1,10 @@
 .vscode/**
+.github/**
 node_modules/**
 src/**
+out/**/*.test.js
+out/**/*.test.js.map
+manual-test.ts
 tsconfig.json
 .gitignore
 *.map

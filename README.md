@@ -72,6 +72,22 @@ This extension has no configuration options — it works out of the box.
 
 ---
 
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run tests
+npm test
+
+# Compile
+npm run compile
+
+# Package as .vsix
+npm run package
+```
+
 ## Contributing
 
 Found a bug or have a feature request? Open an issue on [GitHub](https://github.com/marpro200/ts-clickable-types).
