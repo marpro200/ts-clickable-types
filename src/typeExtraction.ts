@@ -114,3 +114,61 @@ export function scanForPascalCaseTypes(
 export function escapeRegExp(str: string): string {
 	return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+// ---------------------------------------------------------------------------
+// Pure position search — extracted so it can be unit-tested without VS Code
+// ---------------------------------------------------------------------------
+
+export interface LinePosition {
+	line: number;
+	character: number;
+}
+
+/**
+ * Finds the position of a type name in a set of lines near a hover location.
+ * Searches the hovered line first (preferring the match closest to the hover
+ * character), then falls back to surrounding lines within searchRange.
+ * Returns null if the type name is not found.
+ */
+export function findTypeNameInLines(
+	lines: string[],
+	hoverLine: number,
+	hoverCharacter: number,
+	typeName: string,
+	searchRange = 5,
+): LinePosition | null {
+	const regex = new RegExp(`\\b${escapeRegExp(typeName)}\\b`, 'g');
+	const startLine = Math.max(0, hoverLine - searchRange);
+	const endLine = Math.min(lines.length - 1, hoverLine + searchRange);
+
+	// Search hovered line first, preferring match closest to hover character
+	let bestMatch: LinePosition | null = null;
+	let bestDistance = Infinity;
+	let m: RegExpExecArray | null;
+
+	regex.lastIndex = 0;
+	while ((m = regex.exec(lines[hoverLine] ?? '')) !== null) {
+		const dist = Math.abs(m.index - hoverCharacter);
+		if (dist < bestDistance) {
+			bestDistance = dist;
+			bestMatch = { line: hoverLine, character: m.index };
+		}
+	}
+	if (bestMatch) {
+		return bestMatch;
+	}
+
+	// Fall back to surrounding lines
+	for (let line = startLine; line <= endLine; line++) {
+		if (line === hoverLine) {
+			continue;
+		}
+		regex.lastIndex = 0;
+		const match = regex.exec(lines[line] ?? '');
+		if (match) {
+			return { line, character: match.index };
+		}
+	}
+
+	return null;
+}

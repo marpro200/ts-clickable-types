@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { extractTypeNames, escapeRegExp } from './typeExtraction';
+import { extractTypeNames, findTypeNameInLines } from './typeExtraction';
 
 const LANGUAGES = [
 	{ language: 'typescript' },
@@ -143,11 +143,17 @@ async function tryTypeDefinitionProvider(
 	try {
 		const document = await vscode.workspace.openTextDocument(uri);
 		const typePos = findTypeNamePosition(document, hoverPosition, typeName);
-		const lookupPos = typePos ?? hoverPosition;
+
+		// If the type name isn't in the source near the hover position (e.g. it's
+		// a generic parameter only visible in the hover text), fall through to the
+		// workspace symbol search rather than resolving the wrong type at hoverPosition.
+		if (!typePos) {
+			return false;
+		}
 
 		const locations = await vscode.commands.executeCommand<
 			(vscode.Location | vscode.LocationLink)[]
-		>('vscode.executeTypeDefinitionProvider', uri, lookupPos);
+		>('vscode.executeTypeDefinitionProvider', uri, typePos);
 
 		if (locations && locations.length > 0) {
 			const loc = locations[0];
@@ -208,44 +214,12 @@ function findTypeNamePosition(
 	hoverPosition: vscode.Position,
 	typeName: string,
 ): vscode.Position | null {
-	const searchRange = 5;
-	const startLine = Math.max(0, hoverPosition.line - searchRange);
-	const endLine = Math.min(document.lineCount - 1, hoverPosition.line + searchRange);
-
-	const regex = new RegExp(`\\b${escapeRegExp(typeName)}\\b`, 'g');
-
-	// Search hovered line first, preferring closest match to hover character
-	const hoveredText = document.lineAt(hoverPosition.line).text;
-	let bestMatch: vscode.Position | null = null;
-	let bestDistance = Infinity;
-	let m: RegExpExecArray | null;
-
-	regex.lastIndex = 0;
-	while ((m = regex.exec(hoveredText)) !== null) {
-		const dist = Math.abs(m.index - hoverPosition.character);
-		if (dist < bestDistance) {
-			bestDistance = dist;
-			bestMatch = new vscode.Position(hoverPosition.line, m.index);
-		}
-	}
-	if (bestMatch) {
-		return bestMatch;
-	}
-
-	// Fall back to surrounding lines
-	for (let line = startLine; line <= endLine; line++) {
-		if (line === hoverPosition.line) {
-			continue;
-		}
-		const lineText = document.lineAt(line).text;
-		regex.lastIndex = 0;
-		const match = regex.exec(lineText);
-		if (match) {
-			return new vscode.Position(line, match.index);
-		}
-	}
-
-	return null;
+	const lines = Array.from(
+		{ length: document.lineCount },
+		(_, i) => document.lineAt(i).text,
+	);
+	const result = findTypeNameInLines(lines, hoverPosition.line, hoverPosition.character, typeName);
+	return result ? new vscode.Position(result.line, result.character) : null;
 }
 
 // ---------------------------------------------------------------------------

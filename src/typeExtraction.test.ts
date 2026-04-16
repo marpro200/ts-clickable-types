@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractTypeNames, scanForPascalCaseTypes, escapeRegExp, BUILTIN_TYPES } from './typeExtraction';
+import { extractTypeNames, scanForPascalCaseTypes, escapeRegExp, BUILTIN_TYPES, findTypeNameInLines } from './typeExtraction';
 
 // Helper to wrap code in a fenced block (mimics TS hover output)
 function fenced(code: string): string {
@@ -234,6 +234,71 @@ describe('scanForPascalCaseTypes', () => {
 		const found = new Set<string>();
 		scanForPascalCaseTypes('', found, new Set());
 		expect(found.size).toBe(0);
+	});
+});
+
+describe('findTypeNameInLines', () => {
+	it('finds a type on the hovered line', () => {
+		const lines = ['const x: MyType = value'];
+		expect(findTypeNameInLines(lines, 0, 9, 'MyType')).toEqual({ line: 0, character: 9 });
+	});
+
+	it('returns null when type is not present — generic parameter not in source', () => {
+		// Reproduces the ApiResponse<User> bug: hovering "response" on the call
+		// site where User only appears in the hover text, not the source line.
+		const lines = [
+			'const response = await service.createUser({',
+			"  email: 'alice@example.com',",
+			'  role: UserRole.Admin,',
+			'})',
+		];
+		// "User" does not appear as a standalone word near line 0
+		expect(findTypeNameInLines(lines, 0, 6, 'User')).toBeNull();
+	});
+
+	it('respects word boundaries — does not match User inside createUser or UserRole', () => {
+		const lines = ['const x = service.createUser({ role: UserRole.Admin })'];
+		expect(findTypeNameInLines(lines, 0, 0, 'User')).toBeNull();
+	});
+
+	it('prefers the match closest to the hover character', () => {
+		const lines = ['MyType foo MyType bar MyType'];
+		//               0      6   11     17  22
+		// hovering at character 13 — middle MyType (11) is closest
+		expect(findTypeNameInLines(lines, 0, 13, 'MyType')).toEqual({ line: 0, character: 11 });
+	});
+
+	it('falls back to a surrounding line when not found on hovered line', () => {
+		const lines = [
+			'function load() {',
+			'  return data',
+			'}',
+		];
+		expect(findTypeNameInLines(lines, 1, 2, 'Config')).toBeNull();
+
+		const linesWithType = [
+			'const x: Config = {}',
+			'return x',
+		];
+		expect(findTypeNameInLines(linesWithType, 1, 7, 'Config')).toEqual({ line: 0, character: 9 });
+	});
+
+	it('does not search beyond searchRange', () => {
+		const lines = [
+			'MyType is here',   // line 0
+			'',                 // line 1
+			'',                 // line 2
+			'',                 // line 3
+			'',                 // line 4
+			'',                 // line 5
+			'hover here',       // line 6
+		];
+		// line 0 is exactly 6 lines above hover line 6 — outside default searchRange of 5
+		expect(findTypeNameInLines(lines, 6, 0, 'MyType')).toBeNull();
+	});
+
+	it('handles an empty lines array gracefully', () => {
+		expect(findTypeNameInLines([], 0, 0, 'MyType')).toBeNull();
 	});
 });
 
