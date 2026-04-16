@@ -64,7 +64,10 @@ const PASCAL_CASE = /\b([A-Z][A-Za-z0-9_]*[a-z][A-Za-z0-9_]*)\b/g;
 // ---------------------------------------------------------------------------
 // Type name extraction from hover markdown text
 // ---------------------------------------------------------------------------
-export function extractTypeNames(hoverText: string): string[] {
+export function extractTypeNames(
+	hoverText: string,
+	additionalExclusions?: ReadonlySet<string>,
+): string[] {
 	const found = new Set<string>();
 
 	// Exclude the declared symbol name (e.g. "X" from "const X: ...")
@@ -80,13 +83,13 @@ export function extractTypeNames(hoverText: string): string[] {
 	FENCED_BLOCK.lastIndex = 0;
 	let m: RegExpExecArray | null;
 	while ((m = FENCED_BLOCK.exec(hoverText)) !== null) {
-		scanForPascalCaseTypes(m[1], found, symbolNames);
+		scanForPascalCaseTypes(m[1], found, symbolNames, additionalExclusions);
 	}
 
 	// Scan inline code spans
 	INLINE_CODE.lastIndex = 0;
 	while ((m = INLINE_CODE.exec(hoverText)) !== null) {
-		scanForPascalCaseTypes(m[1], found, symbolNames);
+		scanForPascalCaseTypes(m[1], found, symbolNames, additionalExclusions);
 	}
 
 	return Array.from(found);
@@ -96,12 +99,13 @@ export function scanForPascalCaseTypes(
 	code: string,
 	found: Set<string>,
 	exclude: Set<string>,
+	additionalExclusions?: ReadonlySet<string>,
 ): void {
 	PASCAL_CASE.lastIndex = 0;
 	let m: RegExpExecArray | null;
 	while ((m = PASCAL_CASE.exec(code)) !== null) {
 		const name = m[1];
-		if (!BUILTIN_TYPES.has(name) && !exclude.has(name)) {
+		if (!BUILTIN_TYPES.has(name) && !exclude.has(name) && !additionalExclusions?.has(name)) {
 			found.add(name);
 		}
 	}

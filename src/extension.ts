@@ -69,7 +69,9 @@ async function provideHover(
 			}
 		}
 
-		const typeNames = extractTypeNames(combinedText);
+		const config = vscode.workspace.getConfiguration('tsClickableTypes');
+		const userExclusions = new Set(config.get<string[]>('excludeTypes', []));
+		const typeNames = extractTypeNames(combinedText, userExclusions);
 		if (typeNames.length === 0) {
 			return undefined;
 		}

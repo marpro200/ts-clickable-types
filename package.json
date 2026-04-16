@@ -42,7 +42,18 @@
 				"command": "tsClickableTypes.goToTypeDefinition",
 				"title": "TypeScript Clickable Types: Go to Type Definition"
 			}
-		]
+		],
+		"configuration": {
+			"title": "TypeScript Clickable Types",
+			"properties": {
+				"tsClickableTypes.excludeTypes": {
+					"type": "array",
+					"items": { "type": "string" },
+					"default": [],
+					"description": "Additional type names to exclude from clickable links. Merged with the built-in exclusion list."
+				}
+			}
+		}
 	},
 	"scripts": {
 		"compile": "tsc -p ./",

@@ -61,7 +61,15 @@ Clicking the type name jumps straight to wherever it is defined — whether that
 
 ## Extension Settings
 
-This extension has no configuration options — it works out of the box.
+| Setting | Type | Default | Description |
+|---|---|---|---|
+| `tsClickableTypes.excludeTypes` | `string[]` | `[]` | Additional type names to exclude from clickable links. Merged with the built-in exclusion list. |
+
+**Example** — add to your `settings.json` to suppress links for specific types:
+
+```json
+"tsClickableTypes.excludeTypes": ["Component", "Ref", "FC"]
+```
 
 ---
 

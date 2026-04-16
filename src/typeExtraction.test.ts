@@ -162,6 +162,20 @@ describe('extractTypeNames', () => {
 		expect(result).toContain('Item');
 	});
 
+	// --- Additional exclusions ---
+
+	it('respects additional exclusions passed by the caller', () => {
+		const hover = fenced('const x: Foo | Bar | Baz');
+		const result = extractTypeNames(hover, new Set(['Foo', 'Bar']));
+		expect(result).toEqual(['Baz']);
+	});
+
+	it('additional exclusions do not affect the built-in list', () => {
+		const hover = fenced('const x: MyType | Array<string>');
+		const result = extractTypeNames(hover, new Set(['MyType']));
+		expect(result).toEqual([]);
+	});
+
 	// --- Deduplication ---
 
 	it('deduplicates repeated type names', () => {
