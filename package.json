@@ -2,7 +2,7 @@
 	"name": "ts-clickable-types",
 	"displayName": "TypeScript Clickable Types",
 	"description": "Adds clickable type-name links to hover tooltips — jump to any type definition like in Visual Studio.",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"publisher": "profanterdev",
 	"repository": {
 		"type": "git",
@@ -48,7 +48,9 @@
 			"properties": {
 				"tsClickableTypes.excludeTypes": {
 					"type": "array",
-					"items": { "type": "string" },
+					"items": {
+						"type": "string"
+					},
 					"default": [],
 					"description": "Additional type names to exclude from clickable links. Merged with the built-in exclusion list."
 				}
