@@ -6,5 +6,6 @@ out/**/*.test.js
 out/**/*.test.js.map
 out/**/*.js.map
 tsconfig.json
+vitest.config.ts
 .gitignore
 *.map
