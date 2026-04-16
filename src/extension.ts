@@ -111,6 +111,12 @@ async function goToTypeDefinition(args: {
 	typeName: string;
 }): Promise<void> {
 	const uri = vscode.Uri.parse(args.uri);
+
+	const ALLOWED_SCHEMES = new Set(['file', 'vscode-vfs', 'untitled']);
+	if (!ALLOWED_SCHEMES.has(uri.scheme)) {
+		return;
+	}
+
 	const hoverPosition = new vscode.Position(args.line, args.character);
 
 	// Strategy 1: Find the type name in the source text near the hover position,
