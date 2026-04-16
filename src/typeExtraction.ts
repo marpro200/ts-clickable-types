@@ -43,6 +43,25 @@ export const BUILTIN_TYPES = new Set([
 ]);
 
 // ---------------------------------------------------------------------------
+// Module-scoped regex constants — hoisted to avoid per-call recompilation.
+// All use the `g` flag; callers must reset lastIndex = 0 before each use.
+// ---------------------------------------------------------------------------
+
+// Excludes the declared symbol name (e.g. "X" from "type X = ..." or "const X: ...").
+// Covers all declaration keywords so hovering on a declaration doesn't self-link.
+const SYMBOL_PATTERN = /(?:const|let|var|function|class|interface|type|enum|namespace)\s+([A-Z][a-zA-Z0-9_]*)/g;
+
+// Matches fenced code blocks in hover markdown.
+const FENCED_BLOCK = /```[\w]*\n([\s\S]*?)\n```/g;
+
+// Matches inline code spans in hover markdown.
+const INLINE_CODE = /`([^`\n]+)`/g;
+
+// Matches PascalCase identifiers — requires at least one lowercase letter to
+// exclude ALL_CAPS constants (e.g. MAX_RETRY, API_KEY) which are not types.
+const PASCAL_CASE = /\b([A-Z][A-Za-z0-9_]*[a-z][A-Za-z0-9_]*)\b/g;
+
+// ---------------------------------------------------------------------------
 // Type name extraction from hover markdown text
 // ---------------------------------------------------------------------------
 export function extractTypeNames(hoverText: string): string[] {
@@ -51,22 +70,22 @@ export function extractTypeNames(hoverText: string): string[] {
 	// Exclude the declared symbol name (e.g. "X" from "const X: ...")
 	// since it's the variable/function name, not a type reference.
 	const symbolNames = new Set<string>();
-	const symbolPattern = /(?:const|let|var|function|class)\s+([A-Z][a-zA-Z0-9_]*)/g;
+	SYMBOL_PATTERN.lastIndex = 0;
 	let s: RegExpExecArray | null;
-	while ((s = symbolPattern.exec(hoverText)) !== null) {
+	while ((s = SYMBOL_PATTERN.exec(hoverText)) !== null) {
 		symbolNames.add(s[1]);
 	}
 
 	// Scan fenced code blocks
-	const fenced = /```[\w]*\n([\s\S]*?)\n```/g;
+	FENCED_BLOCK.lastIndex = 0;
 	let m: RegExpExecArray | null;
-	while ((m = fenced.exec(hoverText)) !== null) {
+	while ((m = FENCED_BLOCK.exec(hoverText)) !== null) {
 		scanForPascalCaseTypes(m[1], found, symbolNames);
 	}
 
 	// Scan inline code spans
-	const inline = /`([^`\n]+)`/g;
-	while ((m = inline.exec(hoverText)) !== null) {
+	INLINE_CODE.lastIndex = 0;
+	while ((m = INLINE_CODE.exec(hoverText)) !== null) {
 		scanForPascalCaseTypes(m[1], found, symbolNames);
 	}
 
@@ -78,9 +97,9 @@ export function scanForPascalCaseTypes(
 	found: Set<string>,
 	exclude: Set<string>,
 ): void {
-	const pascal = /\b([A-Z][a-zA-Z0-9_]*)\b/g;
+	PASCAL_CASE.lastIndex = 0;
 	let m: RegExpExecArray | null;
-	while ((m = pascal.exec(code)) !== null) {
+	while ((m = PASCAL_CASE.exec(code)) !== null) {
 		const name = m[1];
 		if (!BUILTIN_TYPES.has(name) && !exclude.has(name)) {
 			found.add(name);

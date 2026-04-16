@@ -59,6 +59,31 @@ describe('extractTypeNames', () => {
 		expect(result).not.toContain('MyService');
 	});
 
+	it('excludes declared type alias name', () => {
+		const hover = fenced('type UserRecord = Record<string, UserProfile>');
+		const result = extractTypeNames(hover);
+		expect(result).toEqual(['UserProfile']);
+		expect(result).not.toContain('UserRecord');
+	});
+
+	it('excludes declared interface name', () => {
+		const hover = fenced('interface ApiResponse extends BaseResponse');
+		const result = extractTypeNames(hover);
+		expect(result).toEqual(['BaseResponse']);
+		expect(result).not.toContain('ApiResponse');
+	});
+
+	it('excludes declared enum name', () => {
+		const hover = fenced('enum Status');
+		expect(extractTypeNames(hover)).toEqual([]);
+	});
+
+	it('does not produce links for SCREAMING_CASE constants', () => {
+		expect(extractTypeNames(fenced('const MAX_RETRY = 3'))).toEqual([]);
+		expect(extractTypeNames(fenced('const API_KEY: string'))).toEqual([]);
+		expect(extractTypeNames(fenced('const SCREAMING_CASE = true'))).toEqual([]);
+	});
+
 	// --- Generic types ---
 
 	it('extracts type from a simple generic', () => {
@@ -171,6 +196,12 @@ describe('scanForPascalCaseTypes', () => {
 		const found = new Set<string>();
 		scanForPascalCaseTypes('Foo and Bar', found, new Set());
 		expect(found).toEqual(new Set(['Foo', 'Bar']));
+	});
+
+	it('ignores ALL_CAPS identifiers', () => {
+		const found = new Set<string>();
+		scanForPascalCaseTypes('MAX_RETRY API_KEY SCREAMING', found, new Set());
+		expect(found.size).toBe(0);
 	});
 
 	it('skips built-in types', () => {

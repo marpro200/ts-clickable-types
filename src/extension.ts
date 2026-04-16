@@ -14,11 +14,15 @@ const COMMAND_ID = 'tsClickableTypes.goToTypeDefinition';
 // Allows us to correctly handle overlapping async hover calls.
 let providingDepth = 0;
 
+let outputChannel: vscode.OutputChannel | undefined;
+
 // ---------------------------------------------------------------------------
 // Activate
 // ---------------------------------------------------------------------------
 export function activate(context: vscode.ExtensionContext) {
+	outputChannel = vscode.window.createOutputChannel('TS Clickable Types');
 	context.subscriptions.push(
+		outputChannel,
 		vscode.commands.registerCommand(COMMAND_ID, goToTypeDefinition),
 		vscode.languages.registerHoverProvider(LANGUAGES, { provideHover }),
 	);
@@ -32,6 +36,7 @@ export function deactivate() { }
 async function provideHover(
 	document: vscode.TextDocument,
 	position: vscode.Position,
+	token: vscode.CancellationToken,
 ): Promise<vscode.Hover | undefined> {
 	if (providingDepth > 0) {
 		return undefined;
@@ -44,6 +49,10 @@ async function provideHover(
 			document.uri,
 			position,
 		);
+
+		if (token.isCancellationRequested) {
+			return undefined;
+		}
 
 		if (!hovers || hovers.length === 0) {
 			return undefined;
@@ -134,19 +143,19 @@ async function tryTypeDefinitionProvider(
 
 		if (locations && locations.length > 0) {
 			const loc = locations[0];
-			const targetUri = 'uri' in loc ? loc.uri : loc.targetUri;
+			const targetUri = 'targetUri' in loc ? loc.targetUri : loc.uri;
 			const targetRange =
-				'range' in loc
-					? loc.range
-					: loc.targetSelectionRange ?? loc.targetRange;
+				'targetUri' in loc
+					? loc.targetSelectionRange ?? loc.targetRange
+					: loc.range;
 			await vscode.window.showTextDocument(targetUri, {
 				selection: targetRange,
 				preview: false,
 			});
 			return true;
 		}
-	} catch {
-		// fall through
+	} catch (err) {
+		outputChannel?.appendLine(`[tryTypeDefinitionProvider] ${err}`);
 	}
 	return false;
 }
@@ -177,8 +186,8 @@ async function tryWorkspaceSymbolSearch(typeName: string): Promise<boolean> {
 			});
 			return true;
 		}
-	} catch {
-		// fall through
+	} catch (err) {
+		outputChannel?.appendLine(`[tryWorkspaceSymbolSearch] ${err}`);
 	}
 	return false;
 }
@@ -240,7 +249,7 @@ function toMarkdownString(
 	content: vscode.MarkdownString | MarkedString,
 ): vscode.MarkdownString | null {
 	if (content instanceof vscode.MarkdownString) {
-		return new vscode.MarkdownString(content.value);
+		return content;
 	}
 	if (typeof content === 'string') {
 		return new vscode.MarkdownString(content);

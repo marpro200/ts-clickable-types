@@ -4,7 +4,7 @@ node_modules/**
 src/**
 out/**/*.test.js
 out/**/*.test.js.map
-manual-test.ts
+out/**/*.js.map
 tsconfig.json
 .gitignore
 *.map
