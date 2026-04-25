@@ -17,6 +17,3 @@ Thumbs.db
 
 # VS Code
 .vscode-test/
-
-# Manual test files
-manual-test.ts
