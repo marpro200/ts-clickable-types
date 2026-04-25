@@ -6,8 +6,10 @@
 	"publisher": "profanterdev",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/marpro200/ts-clickable-types"
+		"url": "https://github.com/marpro200/ts-clickable-types.git"
 	},
+	"bugs": { "url": "https://github.com/marpro200/ts-clickable-types/issues" },
+	"homepage": "https://github.com/marpro200/ts-clickable-types#readme",
 	"license": "MIT",
 	"engines": {
 		"vscode": "^1.74.0"
