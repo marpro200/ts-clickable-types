@@ -1,11 +1,13 @@
 .vscode/**
 .github/**
+.claude/**
 node_modules/**
 src/**
 out/**/*.test.js
 out/**/*.test.js.map
-out/**/*.js.map
+out/typeExtraction.js
+out/typeExtraction.js.map
 tsconfig.json
 vitest.config.ts
 .gitignore
-*.map
+CODE_REVIEW.md

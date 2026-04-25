@@ -8,7 +8,9 @@
 		"type": "git",
 		"url": "https://github.com/marpro200/ts-clickable-types.git"
 	},
-	"bugs": { "url": "https://github.com/marpro200/ts-clickable-types/issues" },
+	"bugs": {
+		"url": "https://github.com/marpro200/ts-clickable-types/issues"
+	},
 	"homepage": "https://github.com/marpro200/ts-clickable-types#readme",
 	"license": "MIT",
 	"engines": {
@@ -32,7 +34,9 @@
 		"javascript"
 	],
 	"capabilities": {
-		"untrustedWorkspaces": { "supported": true },
+		"untrustedWorkspaces": {
+			"supported": true
+		},
 		"virtualWorkspaces": true
 	},
 	"activationEvents": [
@@ -64,6 +68,8 @@
 		}
 	},
 	"scripts": {
+		"esbuild": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --minify --sourcemap",
+		"vscode:prepublish": "npm run esbuild",
 		"compile": "tsc -p ./",
 		"watch": "tsc -watch -p ./",
 		"test": "vitest run",
@@ -73,6 +79,7 @@
 		"@types/node": "^20",
 		"@types/vscode": "^1.74.0",
 		"@vscode/vsce": "^3.9.0",
+		"esbuild": "^0.28.0",
 		"typescript": "^5.0.0",
 		"vitest": "^4.1.3"
 	}
