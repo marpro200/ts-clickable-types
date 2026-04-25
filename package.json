@@ -29,6 +29,10 @@
 		"tsx",
 		"javascript"
 	],
+	"capabilities": {
+		"untrustedWorkspaces": { "supported": true },
+		"virtualWorkspaces": true
+	},
 	"activationEvents": [
 		"onLanguage:typescript",
 		"onLanguage:typescriptreact",
