@@ -10,8 +10,8 @@ const LANGUAGES = [
 
 const COMMAND_ID = 'tsClickableTypes.goToTypeDefinition';
 
-// Re-entrancy depth counter — more robust than a boolean flag.
-// Allows us to correctly handle overlapping async hover calls.
+// Blocks recursion when our hover provider triggers `executeHoverProvider`,
+// which would otherwise call us again for the same position.
 let providingDepth = 0;
 
 let outputChannel: vscode.OutputChannel | undefined;
