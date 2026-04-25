@@ -70,6 +70,7 @@
 	"scripts": {
 		"esbuild": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --minify --sourcemap",
 		"vscode:prepublish": "npm run esbuild",
+		"typecheck": "tsc --noEmit",
 		"compile": "tsc -p ./",
 		"watch": "tsc -watch -p ./",
 		"test": "vitest run",
