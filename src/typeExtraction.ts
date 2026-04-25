@@ -124,14 +124,18 @@ export interface LinePosition {
 	character: number;
 }
 
+type LineReader = (lineNumber: number) => string;
+
 /**
- * Finds the position of a type name in a set of lines near a hover location.
+ * Finds the position of a type name in lines near a hover location.
  * Searches the hovered line first (preferring the match closest to the hover
  * character), then falls back to surrounding lines within searchRange.
- * Returns null if the type name is not found.
+ * Only calls readLine for lines within the window — never materializes the
+ * full document. Returns null if the type name is not found.
  */
 export function findTypeNameInLines(
-	lines: string[],
+	readLine: LineReader,
+	totalLines: number,
 	hoverLine: number,
 	hoverCharacter: number,
 	typeName: string,
@@ -139,7 +143,7 @@ export function findTypeNameInLines(
 ): LinePosition | null {
 	const regex = new RegExp(`\\b${escapeRegExp(typeName)}\\b`, 'g');
 	const startLine = Math.max(0, hoverLine - searchRange);
-	const endLine = Math.min(lines.length - 1, hoverLine + searchRange);
+	const endLine = Math.min(totalLines - 1, hoverLine + searchRange);
 
 	// Search hovered line first, preferring match closest to hover character
 	let bestMatch: LinePosition | null = null;
@@ -147,7 +151,7 @@ export function findTypeNameInLines(
 	let m: RegExpExecArray | null;
 
 	regex.lastIndex = 0;
-	while ((m = regex.exec(lines[hoverLine] ?? '')) !== null) {
+	while ((m = regex.exec(hoverLine < totalLines ? readLine(hoverLine) : '')) !== null) {
 		const dist = Math.abs(m.index - hoverCharacter);
 		if (dist < bestDistance) {
 			bestDistance = dist;
@@ -164,7 +168,7 @@ export function findTypeNameInLines(
 			continue;
 		}
 		regex.lastIndex = 0;
-		const match = regex.exec(lines[line] ?? '');
+		const match = regex.exec(readLine(line));
 		if (match) {
 			return { line, character: match.index };
 		}

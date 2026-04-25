@@ -240,7 +240,7 @@ describe('scanForPascalCaseTypes', () => {
 describe('findTypeNameInLines', () => {
 	it('finds a type on the hovered line', () => {
 		const lines = ['const x: MyType = value'];
-		expect(findTypeNameInLines(lines, 0, 9, 'MyType')).toEqual({ line: 0, character: 9 });
+		expect(findTypeNameInLines((i) => lines[i], lines.length, 0, 9, 'MyType')).toEqual({ line: 0, character: 9 });
 	});
 
 	it('returns null when type is not present — generic parameter not in source', () => {
@@ -253,19 +253,19 @@ describe('findTypeNameInLines', () => {
 			'})',
 		];
 		// "User" does not appear as a standalone word near line 0
-		expect(findTypeNameInLines(lines, 0, 6, 'User')).toBeNull();
+		expect(findTypeNameInLines((i) => lines[i], lines.length, 0, 6, 'User')).toBeNull();
 	});
 
 	it('respects word boundaries — does not match User inside createUser or UserRole', () => {
 		const lines = ['const x = service.createUser({ role: UserRole.Admin })'];
-		expect(findTypeNameInLines(lines, 0, 0, 'User')).toBeNull();
+		expect(findTypeNameInLines((i) => lines[i], lines.length, 0, 0, 'User')).toBeNull();
 	});
 
 	it('prefers the match closest to the hover character', () => {
 		const lines = ['MyType foo MyType bar MyType'];
 		//               0      6   11     17  22
 		// hovering at character 13 — middle MyType (11) is closest
-		expect(findTypeNameInLines(lines, 0, 13, 'MyType')).toEqual({ line: 0, character: 11 });
+		expect(findTypeNameInLines((i) => lines[i], lines.length, 0, 13, 'MyType')).toEqual({ line: 0, character: 11 });
 	});
 
 	it('falls back to a surrounding line when not found on hovered line', () => {
@@ -274,13 +274,13 @@ describe('findTypeNameInLines', () => {
 			'  return data',
 			'}',
 		];
-		expect(findTypeNameInLines(lines, 1, 2, 'Config')).toBeNull();
+		expect(findTypeNameInLines((i) => lines[i], lines.length, 1, 2, 'Config')).toBeNull();
 
 		const linesWithType = [
 			'const x: Config = {}',
 			'return x',
 		];
-		expect(findTypeNameInLines(linesWithType, 1, 7, 'Config')).toEqual({ line: 0, character: 9 });
+		expect(findTypeNameInLines((i) => linesWithType[i], linesWithType.length, 1, 7, 'Config')).toEqual({ line: 0, character: 9 });
 	});
 
 	it('does not search beyond searchRange', () => {
@@ -294,11 +294,23 @@ describe('findTypeNameInLines', () => {
 			'hover here',       // line 6
 		];
 		// line 0 is exactly 6 lines above hover line 6 — outside default searchRange of 5
-		expect(findTypeNameInLines(lines, 6, 0, 'MyType')).toBeNull();
+		expect(findTypeNameInLines((i) => lines[i], lines.length, 6, 0, 'MyType')).toBeNull();
 	});
 
-	it('handles an empty lines array gracefully', () => {
-		expect(findTypeNameInLines([], 0, 0, 'MyType')).toBeNull();
+	it('handles an empty document gracefully', () => {
+		expect(findTypeNameInLines((_i) => '', 0, 0, 0, 'MyType')).toBeNull();
+	});
+
+	it('only reads lines within the ±5 search window', () => {
+		const totalLines = 10000;
+		const hoverLine = 5000;
+		const lines = new Array<string>(totalLines).fill('');
+		lines[hoverLine - 3] = 'const x: Foo = {}'; // match OFF the hover line, forces fallback loop
+		const calls: number[] = [];
+		const read = (i: number) => { calls.push(i); return lines[i]; };
+		findTypeNameInLines(read, totalLines, hoverLine, 0, 'Foo');
+		expect(calls.every((i) => i >= 4995 && i <= 5005)).toBe(true);
+		expect(calls.length).toBeLessThanOrEqual(11);
 	});
 });
 

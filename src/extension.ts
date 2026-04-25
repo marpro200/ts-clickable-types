@@ -229,11 +229,13 @@ function findTypeNamePosition(
 	hoverPosition: vscode.Position,
 	typeName: string,
 ): vscode.Position | null {
-	const lines = Array.from(
-		{ length: document.lineCount },
-		(_, i) => document.lineAt(i).text,
+	const result = findTypeNameInLines(
+		(i) => document.lineAt(i).text,
+		document.lineCount,
+		hoverPosition.line,
+		hoverPosition.character,
+		typeName,
 	);
-	const result = findTypeNameInLines(lines, hoverPosition.line, hoverPosition.character, typeName);
 	return result ? new vscode.Position(result.line, result.character) : null;
 }
 
