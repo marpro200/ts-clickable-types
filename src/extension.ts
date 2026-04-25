@@ -28,7 +28,10 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 }
 
-export function deactivate() { }
+export function deactivate() {
+	outputChannel = undefined;
+	providingDepth = 0;
+}
 
 // ---------------------------------------------------------------------------
 // Hover Provider
