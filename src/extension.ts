@@ -225,10 +225,8 @@ function findTypeNamePosition(
 // ---------------------------------------------------------------------------
 // Utilities
 // ---------------------------------------------------------------------------
-type MarkedString = { language: string; value: string } | string;
-
 function toMarkdownString(
-	content: vscode.MarkdownString | MarkedString,
+	content: vscode.MarkdownString | vscode.MarkedString,
 ): vscode.MarkdownString | null {
 	if (content instanceof vscode.MarkdownString) {
 		return content;
