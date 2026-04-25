@@ -16,21 +16,35 @@ let providingDepth = 0;
 
 let outputChannel: vscode.OutputChannel | undefined;
 
+let userExclusions = new Set<string>();
+
+function refreshExclusions() {
+	const config = vscode.workspace.getConfiguration('tsClickableTypes');
+	userExclusions = new Set(config.get<string[]>('excludeTypes', []));
+}
+
 // ---------------------------------------------------------------------------
 // Activate
 // ---------------------------------------------------------------------------
 export function activate(context: vscode.ExtensionContext) {
 	outputChannel = vscode.window.createOutputChannel('TS Clickable Types');
+	refreshExclusions();
 	context.subscriptions.push(
 		outputChannel,
 		vscode.commands.registerCommand(COMMAND_ID, goToTypeDefinition),
 		vscode.languages.registerHoverProvider(LANGUAGES, { provideHover }),
+		vscode.workspace.onDidChangeConfiguration((e) => {
+			if (e.affectsConfiguration('tsClickableTypes.excludeTypes')) {
+				refreshExclusions();
+			}
+		}),
 	);
 }
 
 export function deactivate() {
 	outputChannel = undefined;
 	providingDepth = 0;
+	userExclusions = new Set();
 }
 
 // ---------------------------------------------------------------------------
@@ -72,8 +86,6 @@ async function provideHover(
 			}
 		}
 
-		const config = vscode.workspace.getConfiguration('tsClickableTypes');
-		const userExclusions = new Set(config.get<string[]>('excludeTypes', []));
 		const typeNames = extractTypeNames(combinedText, userExclusions);
 		if (typeNames.length === 0) {
 			return undefined;
