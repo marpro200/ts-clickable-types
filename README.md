@@ -1,10 +1,8 @@
 # TypeScript Clickable Types
 
-[![Version](https://img.shields.io/visual-studio-marketplace/v/profanterdev.ts-clickable-types)](https://marketplace.visualstudio.com/items?itemName=profanterdev.ts-clickable-types)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/profanterdev.ts-clickable-types)](https://marketplace.visualstudio.com/items?itemName=profanterdev.ts-clickable-types)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![VS Marketplace Version](https://vsmarketplacebadges.dev/version-short/profanterdev.ts-clickable-types.png?label=VS%20Marketplace&color=blue)](https://marketplace.visualstudio.com/items?itemName=profanterdev.ts-clickable-types) [![Installs](https://vsmarketplacebadges.dev/installs-short/profanterdev.ts-clickable-types.png?label=installs&color=brightgreen)](https://marketplace.visualstudio.com/items?itemName=profanterdev.ts-clickable-types) [![Rating](https://vsmarketplacebadges.dev/rating-short/profanterdev.ts-clickable-types.png?label=rating)](https://marketplace.visualstudio.com/items?itemName=profanterdev.ts-clickable-types) [![Build](https://img.shields.io/github/actions/workflow/status/profanter-dev/ts-clickable-types/ci.yml?label=build)](https://github.com/profanter-dev/ts-clickable-types/actions) [![License](https://img.shields.io/badge/license-MIT-lightgrey)](https://github.com/profanter-dev/ts-clickable-types/blob/main/LICENSE)
 
-> Adds **clickable type links** to TypeScript hover tooltips in VS Code — jump to any type definition like in Visual Studio.
+> **Install:** [Get it on the Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=profanterdev.ts-clickable-types) or grab the latest `.vsix` from [Releases](https://github.com/profanter-dev/ts-clickable-types/releases).
 
 ---
 
@@ -61,9 +59,9 @@ Clicking the type name jumps straight to wherever it is defined — whether that
 
 ## Extension Settings
 
-| Setting | Type | Default | Description |
-|---|---|---|---|
-| `tsClickableTypes.excludeTypes` | `string[]` | `[]` | Additional type names to exclude from clickable links. Merged with the built-in exclusion list. |
+| Setting                         | Type       | Default | Description                                                                                     |
+| ------------------------------- | ---------- | ------- | ----------------------------------------------------------------------------------------------- |
+| `tsClickableTypes.excludeTypes` | `string[]` | `[]`    | Additional type names to exclude from clickable links. Merged with the built-in exclusion list. |
 
 **Example** — add to your `settings.json` to suppress links for specific types:
 
