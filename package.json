@@ -6,12 +6,12 @@
 	"publisher": "profanterdev",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/marpro200/ts-clickable-types.git"
+		"url": "https://github.com/profanter-dev/ts-clickable-types.git"
 	},
 	"bugs": {
-		"url": "https://github.com/marpro200/ts-clickable-types/issues"
+		"url": "https://github.com/profanter-dev/ts-clickable-types/issues"
 	},
-	"homepage": "https://github.com/marpro200/ts-clickable-types#readme",
+	"homepage": "https://github.com/profanter-dev/ts-clickable-types#readme",
 	"license": "MIT",
 	"engines": {
 		"vscode": "^1.74.0"

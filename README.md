@@ -96,7 +96,7 @@ npm run package
 
 ## Contributing
 
-Found a bug or have a feature request? Open an issue on [GitHub](https://github.com/marpro200/ts-clickable-types).
+Found a bug or have a feature request? Open an issue on [GitHub](https://github.com/profanter-dev/ts-clickable-types).
 
 Pull requests are welcome!
 
